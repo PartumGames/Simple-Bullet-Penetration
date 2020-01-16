@@ -1,44 +1,50 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
+using System.Linq;//--neeed this
 
 public class Bullet_Penetration : Weapon
 {
 
     public override void Shoot()
     {
-
-        Debug.Log("/----------------------Shooting------------------/");
-
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
 
-        RaycastHit[] hits = Physics.RaycastAll(ray, range);
+        HandleDamage(SortTheList(Physics.RaycastAll(ray, range)));
+    }
 
-        for (int i = 0; i < hits.Length; i++)
+    private List<RaycastHit> SortTheList(RaycastHit[] _hits)
+    {
+        return _hits.OrderBy(x => Vector3.Distance(this.transform.position, x.transform.position)).ToList();
+    }
+
+    private void HandleDamage(List<RaycastHit> _hits)
+    {
+        float currentDamage = damage;//--100% damage 
+
+        foreach (RaycastHit hit in _hits)
         {
-            RaycastHit hit = hits[i];
+            Pen_Test test = hit.collider.GetComponent<Pen_Test>();
 
-            if (hit.collider.CompareTag("Enemy"))
+            if (test != null)
             {
-                CalculateDamage(hit.collider.gameObject);
+                float dist = Vector3.Distance(transform.position, hit.collider.transform.position);
+
+                currentDamage = test.CalculateDamage(currentDamage, dist);
+
+                if (currentDamage <= 0)
+                {
+                    break;
+                }
+
+            }
+            else
+            {
+                break;
             }
         }
-
     }
 
-    private void CalculateDamage(GameObject go)
-    {
-        float dist = Vector3.Distance(transform.position, go.transform.position);
-
-        float bulletDamage = damage - dist;
-
-        if (damage >= 0)
-        {
-            //--health script -> bulletDamage
-            Debug.Log(go.name + " Took: " + bulletDamage.ToString() + " Of Damage");
-        }
-    }
 
 
 }
